@@ -1,73 +1,57 @@
-import math
+from collections import deque
 
+class Position:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
 
-class PathFinder():
-    def __init__(self, grid, startPos, endPos):
-        self.grid = grid
-        self.endPos = endPos
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y
 
-        self.position = startPos
-    def move(self):
-        closestPos = opened[0]
-        closest = 99999999
-        for i in range(0, 3):
-            new = distance(opened[i], endPos)
-            if new < closest:
-                closest = new
-                closestPos = opened[i]
+    def __hash__(self):
+        return hash((self.x, self.y))
 
-        if set(grid[self.position.up()]) & set(visited[self.position.up()]) == False:
-            opened.append(self.position.up())
-        if set(grid[self.position.down()]) & set(visited[self.position.down()]) == False:
-            opened.append(self.position.down())
-        if set(grid[self.position.left()]) & set(visited[self.position.left()]) == False:
-            opened.append(self.position.left())
-        if set(grid[self.position.right()]) & set(visited[self.position.right()]) == False:
-            opened.append(self.position.right())
+def bfs(maze, start, goal):
+    rows, cols = len(maze), len(maze[0])
+    directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+    queue = deque([(start, [start])])
+    visited = set([start])
 
-        visited.append(self.position)
+    while queue:
+        current, path = queue.popleft()
 
-        print(self.position.getX() + " " + self.position.getY())
+        if current == goal:
+            return path
 
-class Location:
-    def __init__(self, posX, posY):
-        self.posX = posX
-        self.posY = posY
-    def getX(self):
-        return self.posX
-    def getY(self):
-        return self.posY
-    def up(self):
-        return [self.posX, self.posY - 1]
-    def down(self):
-        return [self.posX, self.posY + 1]
-    def left(self):
-        return [self.posX - 1, self.posY]
-    def right(self):
-        return [self.posX + 1, self.posY]
+        for dx, dy in directions:
+            nx, ny = current.x + dx, current.y + dy
+            if 0 <= nx < rows and 0 <= ny < cols and maze[nx][ny] is not None:
+                next_pos = Position(nx, ny)
+                if next_pos not in visited:
+                    visited.add(next_pos)
+                    queue.append((next_pos, path + [next_pos]))
 
-def distance(pos1, pos2):
-    return math.hypot(pos1.getX() + pos2.getX(), pos1.getY() + pos2.getY())
+    return []
 
+rows, cols = 5, 5
+maze = []
 
-visited = []
-opened = []
+for i in range(rows):
+    row = []
+    for j in range(cols):
+        if (i, j) == (0, 0):
+            row.append(Position(i, j))
+        elif (i, j) == (4, 4):
+            row.append(Position(i, j))
+        elif (i == 1 and j == 1) or (i == 1 and j == 3) or (i == 3 and j == 1) or (i == 3 and j == 2):
+            row.append(None)
+        else:
+            row.append(Position(i, j))
+    maze.append(row)
 
-grid = []
+start = maze[0][0]
+goal = maze[4][4]
 
-for x in range(0, 10):
-    for y in range(0, 10):
-        grid.append(Location(x, y))
-
-startPos = Location(0, 0)
-endPos = Location(10, 10)
-
-pathFinder = PathFinder(grid, startPos, endPos)
-
-while(pathFinder.position != endPos):
-    pathFinder.move()
-
-print("done" + pathFinder.position + " " + endPos.getX() + " " + endPos.getY())
-
-
-
+path = bfs(maze, start, goal)
+for p in path:
+    print(f"({p.x}, {p.y})")
